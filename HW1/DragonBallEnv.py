@@ -7,9 +7,9 @@ import time
 
 import numpy as np
 
-import gym
-from gym import Env, spaces, utils
-from gym.error import DependencyNotInstalled
+import gymnasium
+from gymnasium import Env, spaces, utils
+from gymnasium.error import DependencyNotInstalled
 from typing import List, Tuple
 
 
@@ -35,19 +35,28 @@ class DragonBallEnv(Env):
         desc=["SFFF", "FHFH", "FFFH", "HFFG"].
     """
 
-    def __init__(
-            self,
-            desc
-    ):
+    def __init__(self, desc):
         self.desc = desc = np.asarray(desc, dtype="c")
         self.nrow, self.ncol = nrow, ncol = desc.shape
         self.d1 = None
         self.d2 = None
         self.goals = []
-        self.collected_dragon_balls = [False, False]  # to keep track of collected Dragon Balls
+        self.collected_dragon_balls = [
+            False,
+            False,
+        ]  # to keep track of collected Dragon Balls
 
         nA = 4
-        nL_cost = {b"F": 10.0, b"H": np.inf, b"T": 3.0, b"A": 2.0, b"L": 1.0, b"S": 1.0, b"G": 1.0, b"D": 1}
+        nL_cost = {
+            b"F": 10.0,
+            b"H": np.inf,
+            b"T": 3.0,
+            b"A": 2.0,
+            b"L": 1.0,
+            b"S": 1.0,
+            b"G": 1.0,
+            b"D": 1,
+        }
         nS = nrow * ncol
 
         self.dic = {(s, False, False): {a: [] for a in range(nA)} for s in range(nS)}
@@ -83,14 +92,15 @@ class DragonBallEnv(Env):
                         self.P[state[0]][action] = (newstate, cost, terminated)
 
         self.action_space = spaces.Discrete(nA)
-        self.observation_space = spaces.Tuple((
-            spaces.Discrete(nS),
-            spaces.Discrete(2),  # Boolean: Collected Dragon Ball 1
-            spaces.Discrete(2)  # Boolean: Collected Dragon Ball 2
-        ))
+        self.observation_space = spaces.Tuple(
+            (
+                spaces.Discrete(nS),
+                spaces.Discrete(2),  # Boolean: Collected Dragon Ball 1
+                spaces.Discrete(2),  # Boolean: Collected Dragon Ball 2
+            )
+        )
 
         self.render_mode = "ansi"
-
 
     def step(self, a: int) -> Tuple[Tuple, int, bool]:
         """
@@ -99,7 +109,7 @@ class DragonBallEnv(Env):
         Args:
             a - action(DOWN, RIGHT, UP, LEFT)
         Returns:
-            the new state, the cost of the step and whether the search is over 
+            the new state, the cost of the step and whether the search is over
             (it can happen when the agent reaches a final state or falls into a hole).
         """
         newstate, cost, terminated = self.P[self.s[0]][a]
@@ -108,14 +118,16 @@ class DragonBallEnv(Env):
         elif newstate[0] == self.d2[0]:
             self.collected_dragon_balls[1] = True
 
-        newstate = (newstate[0], self.collected_dragon_balls[0], self.collected_dragon_balls[1])
-
+        newstate = (
+            newstate[0],
+            self.collected_dragon_balls[0],
+            self.collected_dragon_balls[1],
+        )
 
         self.s = newstate
         self.lastaction = a
 
         return (newstate, cost, terminated)
-
 
     def inc(self, row: int, col: int, a: int) -> Tuple[int, int]:
         """
@@ -148,7 +160,11 @@ class DragonBallEnv(Env):
         Returns:
             state
         """
-        return (row * self.ncol + col, self.collected_dragon_balls[0], self.collected_dragon_balls[1])
+        return (
+            row * self.ncol + col,
+            self.collected_dragon_balls[0],
+            self.collected_dragon_balls[1],
+        )
 
     def to_row_col(self, state: Tuple) -> Tuple[int, int]:
         """
@@ -167,8 +183,8 @@ class DragonBallEnv(Env):
             state
         Returns:
             Returns a dictionary that contains information on all the successors of the state.
-            The keys are the actions. 
-            The values are tuples of the form (new state, cost, terminated). 
+            The keys are the actions.
+            The values are tuples of the form (new state, cost, terminated).
             Note that terminated is true when the agent reaches a final state or a hole.
         """
         return self.P[state[0]]
@@ -183,12 +199,15 @@ class DragonBallEnv(Env):
         if self.collected_dragon_balls[1] == False:
             self.collected_dragon_balls[1] = state[2]
 
-
     def get_state(self):
         """
         Returns the current state of the agent.
         """
-        return (self.s[0], self.collected_dragon_balls[0], self.collected_dragon_balls[1])
+        return (
+            self.s[0],
+            self.collected_dragon_balls[0],
+            self.collected_dragon_balls[1],
+        )
 
     def is_final_state(self, state: Tuple) -> bool:
         """
@@ -209,7 +228,7 @@ class DragonBallEnv(Env):
 
     def reset(self) -> int:
         """
-        Initializes the search problem. 
+        Initializes the search problem.
         """
         super().reset()
         self.s = self.get_initial_state()
@@ -219,7 +238,7 @@ class DragonBallEnv(Env):
 
     def render(self):
         """
-        Returns a view of the board. 
+        Returns a view of the board.
         """
         return self._render_text()
 
@@ -241,7 +260,9 @@ class DragonBallEnv(Env):
                 elif desc[r][c] in "FTAL":
                     desc[r][c] = utils.colorize(desc[r][c], "green", highlight=True)
                 else:
-                    desc[row][col] = utils.colorize(desc[row][col], "magenta", highlight=True)
+                    desc[row][col] = utils.colorize(
+                        desc[row][col], "magenta", highlight=True
+                    )
         desc[0][0] = utils.colorize(desc[0][0], "yellow", highlight=True)
         if self.lastaction is not None:
             outfile.write(f"  ({['Down', 'Right', 'Up', 'Left'][self.lastaction]})\n")
