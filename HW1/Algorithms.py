@@ -41,17 +41,20 @@ class BFSAgent:
            close.append(self.current_node.state)
            self.n_expended += 1
                    
-           for action in env.succ(self.current_node.state):
+           for action, successor in env.succ(self.current_node.state).items():
+                if successor[0] is None:
+                    continue
+
                 self.env.reset()
                 self.env.set_state(self.current_node.state)
-                s, cost, terminated = self.env.step(action)
+                s, _, _ = self.env.step(action)
 
-                if terminated is True and self.env.is_final_state(s) is False:
+                if self.env.is_final_state(s) is False and s[0] in [sg[0] for sg in self.env.get_goal_states()]:
                     continue
 
                 child = NodeBFS(s, self.current_node, action)
 
-                if child.state not in close and child not in open_nodes:
+                if child.state not in close and child.state not in [n.state for n in open_nodes]:
                     if self.env.is_final_state(child.state):
                         return self.solution(child)
                     open_nodes.append(child)
@@ -68,7 +71,7 @@ class BFSAgent:
         self.env.reset()
 
         for a in actions:
-            new_state, cost, terminated = self.env.step(a)
+            _, cost, _ = self.env.step(a)
             total_cost += cost
         
         return [actions, total_cost, self.n_expended]
