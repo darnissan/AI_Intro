@@ -7,13 +7,26 @@ import heapdict
 
 
 class W_AStar_Node:
-    def __init__(self, state, parent_node, action, weight, g_value, h_value):
+    def __init__(
+        self,
+        state,
+        parent_node,
+        action,
+        weight,
+        g_value,
+        h_value,
+        terminated,
+        old_g_value,
+    ):
         self.state = state
         self.parent = parent_node
         self.action_from_parent = action
         self.g_value = g_value
         self.h_value = h_value
         self.f_value = (weight * h_value) + (1 - weight) * g_value
+        self.is_terminated = terminated
+        self.already_expended = False
+        self.old_g_value = g_value
 
     def __lt__(self, other):
         if self.f_value == other.f_value:
@@ -49,7 +62,7 @@ class BFSAgent:
             self.current_node = open_nodes.pop(0)
             close.append(self.current_node.state)
             self.n_expended += 1
-
+            print(self.current_node.state, self.n_expended)
             for action, successor in env.succ(self.current_node.state).items():
                 if successor[0] is None:
                     continue
@@ -126,17 +139,27 @@ class WeightedAStarAgent:
     def __init__(self) -> None:
         self.Dragongoals = []
         self.env = None
+        self.nL_cost = {
+            b"F": 10.0,
+            b"H": np.inf,
+            b"T": 3.0,
+            b"A": 2.0,
+            b"L": 1.0,
+            b"S": 1.0,
+            b"G": 1.0,
+            b"D": 1,
+        }
 
     def MSAP_Heuristic(self, state, env):
         # return min (manhatan distance from the state any of  goal states )
         state_location = env.to_row_col(state)
         min_manhatan_distance = np.inf
-        if state[1] and self.env.d1 in self.Dragongoals:
-            self.Dragongoals.remove(self.env.d1)
-        if state[2] and self.env.d2 in self.Dragongoals:
-            self.Dragongoals.remove(self.env.d2)
 
         for g in self.Dragongoals:
+            if g == env.d1 and state[1] == True:
+                continue
+            if g == env.d2 and state[2] == True:
+                continue
             current_location = env.to_row_col(g)
             manhatan_distance = abs(state_location[0] - current_location[0]) + abs(
                 state_location[1] - current_location[1]
@@ -155,34 +178,67 @@ class WeightedAStarAgent:
 
         n_state = self.env.get_initial_state()
         self.current_node = W_AStar_Node(
-            n_state, None, None, h_weight, 0, self.MSAP_Heuristic(n_state, env)
+            n_state,
+            None,
+            None,
+            h_weight,
+            0,
+            self.MSAP_Heuristic(n_state, env),
+            False,
+            0,
         )
         close = {}
         OPEN = heapdict.heapdict()
         OPEN[self.current_node.state] = (self.current_node.f_value, self.current_node)
         self.n_expended = 0
-
         while OPEN:
             n = OPEN.popitem()[1][1]
+
             close[n.state] = n
+
+            if n.is_terminated:  # meaning we reached a hole
+                continue
+            if self.env.is_final_state(n.state) is False and n.state[0] in [
+                sg[0] for sg in self.env.get_goal_states()
+            ]:
+                continue
             self.n_expended += 1
-            if self.env.is_final_state(n.state):
-                return self.solution(n, self.n_expended)
+
             for action, successor in env.succ(n.state).items():
                 if successor[0] is None:
                     continue
-                self.env.reset()
-                self.env.set_state(n.state)
-                s, _, _ = self.env.step(action)
-                if self.env.is_final_state(s) is False and s[0] in [
-                    sg[0] for sg in self.env.get_goal_states()
-                ]:
-                    continue
-                new_g = n.g_value + s[1]
-                new_h = self.MSAP_Heuristic(s, env)
+
+                self.env.set_state_2(n.state)
+                steped_state, steped_cost, steped_is_terminated = self.env.step(action)
+
+                new_g = n.g_value + steped_cost
+                new_h = self.MSAP_Heuristic(steped_state, env)
                 new_f = (h_weight * new_h) + (1 - h_weight) * new_g
-                child = W_AStar_Node(s, n, action, h_weight, new_g, new_h)
-                if child.state not in close and child.state not in OPEN:
+                child = W_AStar_Node(
+                    steped_state,
+                    n,
+                    action,
+                    h_weight,
+                    new_g,
+                    new_h,
+                    steped_is_terminated,
+                    steped_cost,
+                )
+                if self.env.is_final_state(child.state):  # meaning we reached goal
+                    actions = []
+                    total_cost = 0
+                    self.env.reset()
+                    while child.parent is not None:
+                        new_letter = env.desc[child.state[0] // env.ncol][
+                            child.state[0] % env.ncol
+                        ]
+                        cost = self.nL_cost[new_letter]
+                        actions.insert(0, child.action_from_parent)
+                        child = child.parent
+                        total_cost += cost
+                    return actions, total_cost, self.n_expended
+
+                if (child.state in OPEN) == False and (child.state in close) == False:
 
                     OPEN[child.state] = (child.f_value, child)
                 elif child.state in OPEN:
@@ -190,9 +246,12 @@ class WeightedAStarAgent:
                     if new_f < OPEN[child.state][1].f_value:
                         OPEN[child.state] = (new_f, child)
                 else:
+
                     if new_f < close[child.state].f_value:
+                        print("new_f < close[child.state].f_value")
                         OPEN[child.state] = (new_f, child)
                         close.remove(child.state)
+        # print how many keys in close)
 
     def solution(self, node, n_expended):
         actions = []
