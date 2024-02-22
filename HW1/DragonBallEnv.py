@@ -199,6 +199,11 @@ class DragonBallEnv(Env):
         if self.collected_dragon_balls[1] == False:
             self.collected_dragon_balls[1] = state[2]
 
+    def set_state_2(self, state: Tuple) -> None:
+
+        self.s = state
+        self.collected_dragon_balls = [state[1], state[2]]
+
     def get_state(self):
         """
         Returns the current state of the agent.
