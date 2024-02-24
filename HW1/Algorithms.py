@@ -17,12 +17,12 @@ class Agent:
         min_manhatan_distance = np.inf
 
         for g in self.Dragongoals:
-            '''
-            if g == env.d1 and state[1] == True:
+            
+            if g == env.d1 and state[1] == True and state[0]!=g[0] :
                 continue
-            if g == env.d2 and state[2] == True:
+            if g == env.d2 and state[2] == True and state[0]!=g[0]:
                 continue
-            '''
+            
             current_location = env.to_row_col(g)
             manhatan_distance = abs(state_location[0] - current_location[0]) + abs(
                 state_location[1] - current_location[1]
@@ -141,8 +141,6 @@ class WeightedAStarAgent(Agent):
         self.Dragongoals = []
         self.env = None
 
-    
-
     def search(self, env, h_weight) -> tuple:
         self.env = env
         self.env.reset()
@@ -150,7 +148,7 @@ class WeightedAStarAgent(Agent):
         self.Dragongoals.append(env.d1)
         self.Dragongoals.append(env.d2)
 
-        n_state = self.env.get_initial_state()
+        n_state = self.env.get_initial_state() 
         self.current_node = W_AStar_Node(
             n_state,
             None,
@@ -169,12 +167,15 @@ class WeightedAStarAgent(Agent):
 
             close[n.state] = n
 
-            if n.is_terminated:  # meaning we reached a hole
+            if n.is_terminated:
+                self.n_expended+=1# meaning we reached a hole
                 continue
-            if self.env.is_final_state(n.state) is False and n.state[0] in [
-                sg[0] for sg in self.env.get_goal_states()
-            ]:
+            if self.env.is_final_state(n.state) is False and n.state[0] in [sg[0] for sg in self.env.get_goal_states()]:
+                self.n_expended += 1
                 continue
+
+            if n.state == env.d1 or n.state == env.d2:
+                print("in dragon ball")
             self.n_expended += 1
 
             for action, successor in env.succ(n.state).items():
@@ -197,22 +198,20 @@ class WeightedAStarAgent(Agent):
                     steped_is_terminated,
                 )
 
-                if self.env.is_final_state(child.state):  # meaning we reached goal
+                if self.env.is_final_state(child.state): 
+                    # meaning we reached goal
 
                     return self.solution(child, self.n_expended)
 
                 if (child.state in OPEN) == False and (child.state in close) == False:
-
                     OPEN[child.state] = (child.f_value, child)
                 elif child.state in OPEN:
-
                     if new_f < OPEN[child.state][1].f_value:
                         OPEN[child.state] = (new_f, child)
                 else:
-
                     if new_f < close[child.state].f_value:
                         OPEN[child.state] = (new_f, child)
-                        close.remove(child.state)
+                        close.pop(child.state)
 
     def solution(self, node, n_expended):
         actions = []
@@ -235,7 +234,6 @@ class AStarEpsilonAgent(Agent):
     def __init__(self) -> None:
         self.Dragongoals = []
         self.env = None
-       
 
     def update_focal(self, Focal, OPEN, epsilon):
         Focal.clear()
@@ -276,6 +274,7 @@ class AStarEpsilonAgent(Agent):
             close[n.state] = n
 
             if n.is_terminated or (self.env.is_final_state(n.state) is False and n.state[0] in [sg[0] for sg in self.env.get_goal_states()]):
+                self.n_expended += 1
                 continue
 
             self.n_expended += 1
