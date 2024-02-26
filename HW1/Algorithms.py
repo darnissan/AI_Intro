@@ -69,10 +69,12 @@ class Epsilon_AStar_Node:
             return self.state[0] < other.state[0]
         return self.f_value < other.f_value
 class NodeBFS:
-    def __init__(self, state, parent_node, action):
+    def __init__(self, state, parent_node, action, cost, terminated):
         self.state = state
         self.parent_node = parent_node
         self.action_from_parent = action
+        self.cost = cost
+        self.is_terminated = terminated
 
 
 class BFSAgent:
@@ -83,7 +85,7 @@ class BFSAgent:
         self.env = env
         self.env.reset()
         state = self.env.get_initial_state()
-        self.current_node = NodeBFS(state, None, None)
+        self.current_node = NodeBFS(state, None, None, 0, False)
 
         if self.env.is_final_state(self.current_node.state):
             return self.solution(self.current_node)
@@ -95,21 +97,18 @@ class BFSAgent:
         while open_nodes:
             self.current_node = open_nodes.pop(0)
             close.append(self.current_node.state)
-            self.n_expended += 1
-            for action, successor in env.succ(self.current_node.state).items():
-                if successor[0] is None:
-                    continue
 
+            self.n_expended += 1
+
+            if self.current_node.is_terminated:
+                continue
+
+            for action, successor in env.succ(self.current_node.state).items():
                 self.env.reset()
                 self.env.set_state(self.current_node.state)
-                s, _, _ = self.env.step(action)
+                s, cost, terminated = self.env.step(action)
 
-                if self.env.is_final_state(s) is False and s[0] in [
-                    sg[0] for sg in self.env.get_goal_states()
-                ]:
-                    continue
-
-                child = NodeBFS(s, self.current_node, action)
+                child = NodeBFS(s, self.current_node, action, cost, terminated)
 
                 if child.state not in close and child.state not in [
                     n.state for n in open_nodes
@@ -125,13 +124,8 @@ class BFSAgent:
 
         while current_node.action_from_parent is not None:
             actions.insert(0, current_node.action_from_parent)
+            total_cost += current_node.cost
             current_node = current_node.parent_node
-
-        self.env.reset()
-
-        for a in actions:
-            _, cost, _ = self.env.step(a)
-            total_cost += cost
 
         return [actions, total_cost, self.n_expended]
 
