@@ -18,9 +18,9 @@ class Agent:
 
         for g in self.Dragongoals:
             
-            if g == env.d1 and state[1] == True and state[0]!=g[0] :
+            if g == env.d1 and state[1] == True : # and state[0]!=g[0] :
                 continue
-            if g == env.d2 and state[2] == True and state[0]!=g[0]:
+            if g == env.d2 and state[2] == True : # and state[0]!=g[0]:
                 continue
             
             current_location = env.to_row_col(g)
@@ -138,18 +138,18 @@ class WeightedAStarAgent(Agent):
     def search(self, env, h_weight) -> tuple:
         self.env = env
         self.env.reset()
+        self.Dragongoals=[]
         self.Dragongoals.extend(env.get_goal_states())
         self.Dragongoals.append(env.d1)
         self.Dragongoals.append(env.d2)
-
-        n_state = self.env.get_initial_state() 
+ 
         self.current_node = W_AStar_Node(
-            n_state,
+            self.env.get_initial_state(),
             None,
             None,
             h_weight,
             0,
-            self.MSAP_Heuristic(n_state, env),
+            self.MSAP_Heuristic(self.env.get_initial_state(), env),
             False,
         )
         close = {}
@@ -157,34 +157,32 @@ class WeightedAStarAgent(Agent):
         OPEN[self.current_node.state] = (self.current_node.f_value, self.current_node)
         self.n_expended = 0
         while OPEN:
-            n = OPEN.popitem()[1][1]
-
-            close[n.state] = n
-
-            if n.is_terminated:
-                self.n_expended+=1# meaning we reached a hole
+            self.current_node = OPEN.popitem()[1][1]
+            self.env.set_state_2(self.current_node.state)
+            close[self.current_node.state] = self.current_node
+            if self.env.is_final_state(self.current_node.state) :
+                return self.solution(self.current_node, self.n_expended)
+            self.n_expended+=1
+            if self.current_node.is_terminated:
+                #self.n_expended += 1# meaning we reached a hole
                 continue
-            if self.env.is_final_state(n.state) is False and n.state[0] in [sg[0] for sg in self.env.get_goal_states()]:
-                self.n_expended += 1
+            
+            if self.env.is_final_state(self.current_node.state) is False and self.current_node.state[0] in [sg[0] for sg in self.env.get_goal_states()]:
+                #self.n_expended += 1
                 continue
 
-            if n.state == env.d1 or n.state == env.d2:
-                print("in dragon ball")
-            self.n_expended += 1
-
-            for action, successor in env.succ(n.state).items():
-                if successor[0] is None:
-                    continue
-
-                self.env.set_state_2(n.state)
+            for action, _ in env.succ(self.current_node.state).items():
+                
+                self.env.reset
+                self.env.set_state_2(self.current_node.state)
                 steped_state, steped_cost, steped_is_terminated = self.env.step(action)
 
-                new_g = n.g_value + steped_cost
+                new_g = self.current_node.g_value + steped_cost
                 new_h = self.MSAP_Heuristic(steped_state, env)
                 new_f = (h_weight * new_h) + (1 - h_weight) * new_g
                 child = W_AStar_Node(
                     steped_state,
-                    n,
+                    self.current_node,
                     action,
                     h_weight,
                     new_g,
@@ -192,10 +190,10 @@ class WeightedAStarAgent(Agent):
                     steped_is_terminated,
                 )
 
-                if self.env.is_final_state(child.state): 
+#                if self.env.is_final_state(child.state): 
                     # meaning we reached goal
 
-                    return self.solution(child, self.n_expended)
+#                   return self.solution(child, self.n_expended)
 
                 if (child.state in OPEN) == False and (child.state in close) == False:
                     OPEN[child.state] = (child.f_value, child)
