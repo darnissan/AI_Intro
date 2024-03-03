@@ -173,7 +173,7 @@ class WeightedAStarAgent(Agent):
 
             for action, _ in env.succ(self.current_node.state).items():
                 
-                self.env.reset
+                self.env.reset()
                 self.env.set_state_2(self.current_node.state)
                 steped_state, steped_cost, steped_is_terminated = self.env.step(action)
 
@@ -198,7 +198,8 @@ class WeightedAStarAgent(Agent):
                 if (child.state in OPEN) == False and (child.state in close) == False:
                     OPEN[child.state] = (child.f_value, child)
                 elif child.state in OPEN:
-                    if new_f < OPEN[child.state][1].f_value:
+                    if new_f < OPEN[child.state][0] : 
+                        
                         OPEN[child.state] = (new_f, child)
                 else:
                     if new_f < close[child.state].f_value:
