@@ -116,7 +116,7 @@ class BFSAgent:
                     if self.env.is_final_state(child.state):
                         return self.solution(child)
                     open_nodes.append(child)
-
+        return ([], 0, 0)
     def solution(self, node):
         actions = []
         total_cost = 0
@@ -204,7 +204,7 @@ class WeightedAStarAgent(Agent):
                     if new_f < close[child.state].f_value:
                         OPEN[child.state] = (new_f, child)
                         close.pop(child.state)
-
+        return ([],0,0)
     def solution(self, node, n_expended):
         actions = []
         total_cost = 0
@@ -238,74 +238,79 @@ class AStarEpsilonAgent(Agent):
     def search(self, env: DragonBallEnv, epsilon: int ) -> Tuple[List[int], float, int]:
         self.env = env
         self.env.reset()
+        self.Dragongoals=[]
         self.Dragongoals.extend(env.get_goal_states())
         self.Dragongoals.append(env.d1)
         self.Dragongoals.append(env.d2)
 
-        n_state = self.env.get_initial_state()
         self.current_node = Epsilon_AStar_Node(
-            n_state,
+            self.env.get_initial_state(),
             None,
             None,
             0,
-            self.MSAP_Heuristic(n_state, env),
+            self.MSAP_Heuristic(self.env.get_initial_state(), env),
             False,
+            
         )
         close = {}
         OPEN = heapdict.heapdict()
         OPEN[self.current_node.state] = (self.current_node.f_value, self.current_node)
-        Focal = heapdict.heapdict()
-
         self.n_expended = 0
-
+        Focal = heapdict.heapdict()
         while OPEN:
             Focal=self.update_focal(Focal, OPEN, epsilon)
-            n = Focal.popitem()[1][1]
-            OPEN.pop(n.state)
+            self.current_node = Focal.popitem()[1][1]
+            OPEN.pop(self.current_node.state)
 
-            close[n.state] = n
-
-            if n.is_terminated or (self.env.is_final_state(n.state) is False and n.state[0] in [sg[0] for sg in self.env.get_goal_states()]):
-                self.n_expended += 1
+            close[self.current_node.state] = self.current_node
+            if self.env.is_final_state(self.current_node.state):
+                return self.solution(self.current_node, self.n_expended)
+            self.n_expended += 1
+            if self.current_node.is_terminated:
+                # self.n_expended += 1# meaning we reached a hole
                 continue
 
-            self.n_expended += 1
+            if self.env.is_final_state(
+                self.current_node.state
+            ) is False and self.current_node.state[0] in [
+                sg[0] for sg in self.env.get_goal_states()
+            ]:
+                # self.n_expended += 1
+                continue
 
-            for action, successor in env.succ(n.state).items():
-                if successor[0] is None:
-                    continue
+            for action, _ in env.succ(self.current_node.state).items():
 
-                self.env.set_state_2(n.state)
+                self.env.reset
+                self.env.set_state_2(self.current_node.state)
                 steped_state, steped_cost, steped_is_terminated = self.env.step(action)
 
-                new_g = n.g_value + steped_cost
+                new_g = self.current_node.g_value + steped_cost
                 new_h = self.MSAP_Heuristic(steped_state, env)
-                new_f =  new_h +  new_g
+                new_f = new_h +  new_g
                 child = Epsilon_AStar_Node(
                     steped_state,
-                    n,
+                    self.current_node,
                     action,
                     new_g,
                     new_h,
                     steped_is_terminated,
                 )
 
-                if self.env.is_final_state(child.state):  # meaning we reached goal
+                #                if self.env.is_final_state(child.state):
+                # meaning we reached goal
 
-                    return self.solution(child, self.n_expended)
+                #                   return self.solution(child, self.n_expended)
 
                 if (child.state in OPEN) == False and (child.state in close) == False:
-
                     OPEN[child.state] = (child.f_value, child)
                 elif child.state in OPEN:
-
                     if new_f < OPEN[child.state][1].f_value:
                         OPEN[child.state] = (new_f, child)
                 else:
-
                     if new_f < close[child.state].f_value:
                         OPEN[child.state] = (new_f, child)
-                        close.remove(child.state)
+                        close.pop(child.state)
+        return ([], 0, 0)
 
     def solution(self, node, n_expended):
         actions = []
