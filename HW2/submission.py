@@ -8,7 +8,8 @@ import random
 
 def smart_heuristic_for_robot (env: WarehouseEnv, robot_id : int) :
     robot = env.get_robot(robot_id)
-
+    if robot.battery == 0 :
+        return robot.credit
     max = -np.inf
     if (robot.package is None):
         for p in env.packages:
@@ -43,8 +44,34 @@ class AgentGreedyImproved(AgentGreedy):
 
 
 class AgentMinimax(Agent):
+    def __init__(self) :
+        self.epsilon = 0.0001
     # TODO: section b : 1
+    def run_minimax(self, env: WarehouseEnv, agent_id, time_limit, Turn,op):
+        env.apply_operator(agent_id,op)
+        if env.get_robot(agent_id).battery==0 or time_limit == 0:
+            return smart_heuristic_for_robot(agent_id)
+        if Turn=="Max" :
+            currentMax = -np.inf
+            for leagel_op in env.get_legal_opponents(agent_id):
+                values = (run_minimax(env, agent_id,time_limit-self.epsilon,"Min",leagel_op))
+                currentMax = max(currentMax,values)
+            return currentMax
+        else :
+            currentMin= np.inf
+            for leagel_op in env.get_legal_actions:
+                values = (run_minimax(env, agent_id,time_limit-self.epsilon,"Max",leagel_op))
+                currentMin = min(currentMax,values)
+            return currentMin
+
+
+
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
+        return run_minimax(env, agent_id, time_limit,"Max",None)
+
+
+
+
         raise NotImplementedError()
 
 
