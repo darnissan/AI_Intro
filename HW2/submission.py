@@ -6,6 +6,7 @@ import random
 
 
 
+
 def smart_heuristic_for_robot (env: WarehouseEnv, robot_id : int) :
     robot = env.get_robot(robot_id)
     if robot.battery == 0 :

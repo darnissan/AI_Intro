@@ -7,6 +7,7 @@ import submission
 import Agent
 
 
+
 def run_agents():
     parser = argparse.ArgumentParser(description='Test your submission by pitting agents against each other.')
     parser.add_argument('agent0', type=str,
