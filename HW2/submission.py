@@ -32,9 +32,27 @@ def smart_heuristic_for_robot (env: WarehouseEnv, robot_id : int) :
 
 # TODO: section a : 3
 def smart_heuristic(env: WarehouseEnv, robot_id: int):
+    robot= env.get_robot(robot_id)
+    result=robot.credit
+    min_dist_to_pckg = np.inf
+    if robot.package is None :
+        for pckg in env.packages :
+            min_dist_to_pckg= min (min_dist_to_pckg,manhattan_distance(robot.position,pckg.position))
+    else :
+        min_dist_to_pckg = manhattan_distance(robot.position,robot.package.destination)
+    
+    min_dist_to_charging = np.inf
+    for charging_station in env.charge_stations :
+        min_dist_to_charging = min (min_dist_to_charging,manhattan_distance(robot.position,charging_station.position))
+    result-=min_dist_to_charging
+    result-=min_dist_to_pckg
+    return result
+
+'''def smart_heuristic(env: WarehouseEnv, robot_id: int):
     robot_h=smart_heuristic_for_robot(env,robot_id)
     other_robot_h=smart_heuristic_for_robot(env,(robot_id-1)%2)
     return robot_h - other_robot_h
+'''
 
 
 class AgentGreedyImproved(AgentGreedy):
@@ -46,29 +64,32 @@ class AgentGreedyImproved(AgentGreedy):
 
 class AgentMinimax(Agent):
     def __init__(self) :
-        self.epsilon = 0.0001
+        self.epsilon = 0.001
     # TODO: section b : 1
-    def run_minimax(self, env: WarehouseEnv, agent_id, time_limit, Turn,op):
-        env.apply_operator(agent_id,op)
-        if env.get_robot(agent_id).battery==0 or time_limit == 0:
-            return smart_heuristic_for_robot(agent_id)
-        if Turn=="Max" :
+    def run_minimax(self, env: WarehouseEnv, agent_id, time_limit, is_maximazing):
+        if env.done() : 
+            return smart_heuristic(env,agent_id)
+        if is_maximazing :
             currentMax = -np.inf
-            for leagel_op in env.get_legal_opponents(agent_id):
-                values = (run_minimax(env, agent_id,time_limit-self.epsilon,"Min",leagel_op))
-                currentMax = max(currentMax,values)
+            for leagel_op in env.get_legal_operators(agent_id):
+                env_clone = env.clone()
+                env_clone.apply_operator(agent_id,leagel_op)
+                evaluation = (self.run_minimax(env_clone, agent_id,time_limit-self.epsilon,False))
+                currentMax = max(currentMax,evaluation)
             return currentMax
         else :
             currentMin= np.inf
-            for leagel_op in env.get_legal_actions:
-                values = (run_minimax(env, agent_id,time_limit-self.epsilon,"Max",leagel_op))
-                currentMin = min(currentMax,values)
+            for leagel_op in env.get_legal_operators((agent_id+1)%2):
+                env_clone = env.clone()
+                env_clone.apply_operator((agent_id+1)%2,leagel_op)
+                values = (self.run_minimax(env, (agent_id+1)%2,time_limit-self.epsilon,True))
+                currentMin = min(currentMin,values)
             return currentMin
 
 
 
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
-        return run_minimax(env, agent_id, time_limit,"Max",None)
+        return self.run_minimax(env, agent_id, time_limit,True)
 
 
 
