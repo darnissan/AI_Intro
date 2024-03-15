@@ -1,8 +1,9 @@
 import numpy as np
-
+import time
 from Agent import Agent, AgentGreedy
 from WarehouseEnv import WarehouseEnv, manhattan_distance
 import random
+
 
 
 
@@ -31,6 +32,7 @@ def smart_heuristic_for_robot (env: WarehouseEnv, robot_id : int) :
     return h_robot
 
 # TODO: section a : 3
+'''
 def smart_heuristic(env: WarehouseEnv, robot_id: int):
     robot= env.get_robot(robot_id)
     result=robot.credit
@@ -48,7 +50,7 @@ def smart_heuristic(env: WarehouseEnv, robot_id: int):
     result-=min_dist_to_pckg
     return result
 
-'''def smart_heuristic(env: WarehouseEnv, robot_id: int):
+def smart_heuristic(env: WarehouseEnv, robot_id: int):
     robot_h=smart_heuristic_for_robot(env,robot_id)
     other_robot_h=smart_heuristic_for_robot(env,(robot_id-1)%2)
     return robot_h - other_robot_h
@@ -60,38 +62,66 @@ class AgentGreedyImproved(AgentGreedy):
 
 
         return smart_heuristic(env, robot_id)
+    
+def smart_heuristic(env: WarehouseEnv, robot_id: int):
+    robot=env.get_robot(robot_id)
+    result=0
+    if robot.package is  None :
+        pckg1=env.packages[0]
+        dist_pack1_to_dest=manhattan_distance(pckg1.position,pckg1.destination)
+        dist_pckg1_to_robot = manhattan_distance(pckg1.position,robot.position)
+        
+
+        pckg2=env.packages[1]
+        dist_pack2_to_dest=manhattan_distance(pckg2.position,pckg2.destination)
+        dist_pckg2_to_robot = manhattan_distance(pckg2.position,robot.position)
+
+        result = max(dist_pack1_to_dest-dist_pckg1_to_robot,dist_pack2_to_dest-dist_pckg2_to_robot)
+    
+    else :
+        current_pckg=robot.package
+        dist_pckg_to_dest= manhattan_distance(current_pckg.position,current_pckg.destination)
+        dist_dest_to_robot=manhattan_distance(current_pckg.destination,robot.position)
+        result =2*dist_pckg_to_dest - dist_dest_to_robot
+        
+    return result  
 
 
 class AgentMinimax(Agent):
     def __init__(self) :
-        self.epsilon = 0.001
+        self.epsilon = 0.01
     # TODO: section b : 1
-    def run_minimax(self, env: WarehouseEnv, agent_id, time_limit, is_maximazing):
-        if env.done() : 
-            return smart_heuristic(env,agent_id)
+    def run_minimax(self, env: WarehouseEnv, agent_id, time_limit, is_maximazing,deadline,last_op):
+        if time.time() + self.epsilon > deadline or env.done() :
+            return last_op, smart_heuristic(env,agent_id) or env.done()
         if is_maximazing :
-            currentMax = -np.inf
-            for leagel_op in env.get_legal_operators(agent_id):
-                env_clone = env.clone()
-                env_clone.apply_operator(agent_id,leagel_op)
-                evaluation = (self.run_minimax(env_clone, agent_id,time_limit-self.epsilon,False))
-                currentMax = max(currentMax,evaluation)
-            return currentMax
+            operators = env.get_legal_operators(agent_id)
+            children = [env.clone() for _ in operators]
+            for child, op in zip(children, operators):
+                child.apply_operator(agent_id, op)
+            children_heuristics = [self.run_minimax(child,agent_id,time_limit,False,deadline,op)[1] for child,op  in zip (children,operators)]
+            max_heuristic = max(children_heuristics)
+            index_selected = children_heuristics.index(max_heuristic)
+            return operators[index_selected] , max_heuristic
+
+
         else :
-            currentMin= np.inf
-            for leagel_op in env.get_legal_operators((agent_id+1)%2):
-                env_clone = env.clone()
-                env_clone.apply_operator((agent_id+1)%2,leagel_op)
-                values = (self.run_minimax(env, (agent_id+1)%2,time_limit-self.epsilon,True))
-                currentMin = min(currentMin,values)
-            return currentMin
+            operators = env.get_legal_operators(agent_id)
+            children = [env.clone() for _ in operators]
+            for child, op in zip(children, operators):
+                child.apply_operator(agent_id, op)
+            children_heuristics = [self.run_minimax(child,(agent_id+1)%2,time_limit,True,deadline,op)[1] for child,op  in zip (children,operators)]
+            min_heuristic = min(children_heuristics)
+            index_selected = children_heuristics.index(min_heuristic)
+            return operators[index_selected] , min_heuristic
 
 
 
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
-        return self.run_minimax(env, agent_id, time_limit,True)
-
-
+        start_time = time.time()
+        deadline = start_time + time_limit
+        op= self.run_minimax(env, agent_id, time_limit,True,deadline,'park')[0]
+        return op
 
 
         raise NotImplementedError()
