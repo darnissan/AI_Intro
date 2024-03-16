@@ -6,31 +6,6 @@ import random
 
 
 
-
-
-def smart_heuristic_for_robot (env: WarehouseEnv, robot_id : int) :
-    robot = env.get_robot(robot_id)
-    if robot.battery == 0 :
-        return robot.credit
-    max = -np.inf
-    if (robot.package is None):
-        for p in env.packages:
-            if p.on_board:
-                current = 2 * manhattan_distance(p.position, p.destination) - manhattan_distance(p.position,
-                                                                                                 robot.poistion)
-            if current > max:
-                max = current
-    else:
-        max = 2 * manhattan_distance(robot.package.position, robot.package.destination)
-
-    min = np.inf
-    for c in env.charge_stations:
-        current = manhattan_distance(c.position, robot.poistion)
-        if current < min:
-            min = current
-    h_robot = robot.credit + max - min
-    return h_robot
-
 # TODO: section a : 3
 '''
 def smart_heuristic(env: WarehouseEnv, robot_id: int):
@@ -57,74 +32,87 @@ def smart_heuristic(env: WarehouseEnv, robot_id: int):
 '''
 
 
+def smart_heuristic(env: WarehouseEnv, robot_id: int):
+    robot = env.get_robot(robot_id)
+    other_robot = env.get_robot(1 - robot_id)
+
+    # Weights for different components of the heuristic
+    weight_distance_to_package = -1  # We want to minimize distance
+    weight_distance_to_destination = -1  # Minimize distance to destination
+    weight_battery_level = 5  # Higher weight because battery is critical
+    weight_score_difference = 10  # Prioritize maintaining/increasing score lead
+    weight_packages_delivered = 15  # High priority on delivering packages
+
+    nearest_package_distance = min([manhattan_distance(robot.position, package.position)
+                                    for package in env.packages if package.on_board], default=0)
+    if robot.package:
+        distance_to_destination = manhattan_distance(robot.position, robot.package.destination)
+        nearest_package_distance=0
+    else:
+        distance_to_destination = 0  # No package, no distance to calculate
+
+    battery_level = robot.battery
+    score_difference = robot.credit - other_robot.credit
+    packages_delivered = robot.credit // 2  # Assuming each delivery scores 2 points
+
+    heuristic_value = (weight_distance_to_package * nearest_package_distance +
+                       weight_distance_to_destination * distance_to_destination +
+                       weight_battery_level * battery_level +
+                       weight_score_difference * score_difference +
+                       weight_packages_delivered * packages_delivered)
+    return heuristic_value
+
+
 class AgentGreedyImproved(AgentGreedy):
     def heuristic(self, env: WarehouseEnv, robot_id: int):
 
 
         return smart_heuristic(env, robot_id)
     
-def smart_heuristic(env: WarehouseEnv, robot_id: int):
-    robot=env.get_robot(robot_id)
-    result=0
-    if robot.package is  None :
-        pckg1=env.packages[0]
-        dist_pack1_to_dest=manhattan_distance(pckg1.position,pckg1.destination)
-        dist_pckg1_to_robot = manhattan_distance(pckg1.position,robot.position)
-        
+ 
 
-        pckg2=env.packages[1]
-        dist_pack2_to_dest=manhattan_distance(pckg2.position,pckg2.destination)
-        dist_pckg2_to_robot = manhattan_distance(pckg2.position,robot.position)
 
-        result = max(dist_pack1_to_dest-dist_pckg1_to_robot,dist_pack2_to_dest-dist_pckg2_to_robot)
+def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizing):
+    """Perform the minimax decision making."""
+    current_time= time.time()
+    substract= current_time - start_time
+    if state.done() or depth == 0  : # or (time.time() - start_time) >= time_limit:
+        return smart_heuristic(state,agent_id), None
     
-    else :
-        current_pckg=robot.package
-        dist_pckg_to_dest= manhattan_distance(current_pckg.position,current_pckg.destination)
-        dist_dest_to_robot=manhattan_distance(current_pckg.destination,robot.position)
-        result =2*dist_pckg_to_dest - dist_dest_to_robot
-        
-    return result  
+    best_value = float('-inf') if is_maximizing == True else float('inf')
+    best_operator = None
+    for operator, child_state in successors(state, agent_id):
+        value, _ = minimax_decision(child_state, agent_id, depth - 1, time_limit, start_time, not is_maximizing)
+        if is_maximizing:  # Maximizing player
+            if value > best_value:
+                best_value, best_operator = value, operator
+        else:  # Minimizing player
+            if value < best_value:
+                best_value, best_operator = value, operator
+    return best_value, best_operator
 
+def heuristic_value(state, agent_id):
+    """A simple heuristic function to evaluate the game state."""
+    # This can be replaced with a more sophisticated heuristic function
+    robot = state.get_robot(agent_id)
+    other_robot = state.get_robot(1 - agent_id)
+    return robot.credit - other_robot.credit
+
+def successors(state, agent_id):
+    """Generate successors for the current state and agent."""
+    operators = state.get_legal_operators(agent_id)
+    children = []
+    for op in operators:
+        child = state.clone()
+        child.apply_operator(agent_id, op)
+        children.append((op, child))
+    return children
 
 class AgentMinimax(Agent):
-    def __init__(self) :
-        self.epsilon = 0.01
-    # TODO: section b : 1
-    def run_minimax(self, env: WarehouseEnv, agent_id, time_limit, is_maximazing,deadline,last_op):
-        if time.time() + self.epsilon > deadline or env.done() :
-            return last_op, smart_heuristic(env,agent_id) or env.done()
-        if is_maximazing :
-            operators = env.get_legal_operators(agent_id)
-            children = [env.clone() for _ in operators]
-            for child, op in zip(children, operators):
-                child.apply_operator(agent_id, op)
-            children_heuristics = [self.run_minimax(child,agent_id,time_limit,False,deadline,op)[1] for child,op  in zip (children,operators)]
-            max_heuristic = max(children_heuristics)
-            index_selected = children_heuristics.index(max_heuristic)
-            return operators[index_selected] , max_heuristic
-
-
-        else :
-            operators = env.get_legal_operators(agent_id)
-            children = [env.clone() for _ in operators]
-            for child, op in zip(children, operators):
-                child.apply_operator(agent_id, op)
-            children_heuristics = [self.run_minimax(child,(agent_id+1)%2,time_limit,True,deadline,op)[1] for child,op  in zip (children,operators)]
-            min_heuristic = min(children_heuristics)
-            index_selected = children_heuristics.index(min_heuristic)
-            return operators[index_selected] , min_heuristic
-
-
-
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
         start_time = time.time()
-        deadline = start_time + time_limit
-        op= self.run_minimax(env, agent_id, time_limit,True,deadline,'park')[0]
-        return op
-
-
-        raise NotImplementedError()
+        _, best_operator = minimax_decision(env, agent_id, depth=1, time_limit=time_limit, start_time=start_time,is_maximizing=True)
+        return best_operator if best_operator is not None else 'park'
 
 
 class AgentAlphaBeta(Agent):
