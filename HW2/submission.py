@@ -76,7 +76,7 @@ def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizi
     """Perform the minimax decision making."""
     current_time= time.time()
     substract= current_time - start_time
-    if state.done() or depth == 0  : # or (time.time() - start_time) >= time_limit:
+    if state.done() or depth == 0 : # or (time.time() - start_time) >= time_limit:
         return smart_heuristic(state,agent_id), None
     
     best_value = float('-inf') if is_maximizing == True else float('inf')
@@ -84,7 +84,7 @@ def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizi
     for operator, child_state in successors(state, agent_id):
         value, _ = minimax_decision(child_state, agent_id, depth - 1, time_limit, start_time, not is_maximizing)
         if is_maximizing:  # Maximizing player
-            if value > best_value:
+            if value >= best_value:
                 best_value, best_operator = value, operator
         else:  # Minimizing player
             if value < best_value:
