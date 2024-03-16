@@ -76,18 +76,19 @@ def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizi
     """Perform the minimax decision making."""
     current_time= time.time()
     substract= current_time - start_time
-    if state.done() or depth == 0 : # or (time.time() - start_time) >= time_limit:
-        return smart_heuristic(state,agent_id), None
+    real_player= agent_id if is_maximizing else (1-agent_id)
+    if state.done() or depth == 0  or (time.time() - start_time) >= time_limit:
+        return smart_heuristic(state,real_player), None
     
     best_value = float('-inf') if is_maximizing == True else float('inf')
     best_operator = None
     for operator, child_state in successors(state, agent_id):
-        value, _ = minimax_decision(child_state, agent_id, depth - 1, time_limit, start_time, not is_maximizing)
+        value, _ = minimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing)
         if is_maximizing:  # Maximizing player
             if value >= best_value:
                 best_value, best_operator = value, operator
         else:  # Minimizing player
-            if value < best_value:
+            if value <= best_value:
                 best_value, best_operator = value, operator
     return best_value, best_operator
 
@@ -111,7 +112,7 @@ def successors(state, agent_id):
 class AgentMinimax(Agent):
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
         start_time = time.time()
-        _, best_operator = minimax_decision(env, agent_id, depth=1, time_limit=time_limit, start_time=start_time,is_maximizing=True)
+        _, best_operator = minimax_decision(env, agent_id, depth=7, time_limit=time_limit, start_time=start_time,is_maximizing=True)
         return best_operator if best_operator is not None else 'park'
 
 
