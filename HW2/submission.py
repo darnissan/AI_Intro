@@ -74,15 +74,17 @@ class AgentGreedyImproved(AgentGreedy):
 
 def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizing):
     """Perform the minimax decision making."""
-    current_time= time.time()
-    substract= current_time - start_time
     real_player= agent_id if is_maximizing else (1-agent_id)
-    if state.done() or depth == 0  or (time.time() - start_time) >= time_limit:
+    if (time.time() - start_time) >= time_limit*0.9:
+        raise TimeoutError
+    if state.done() or depth == 0 : 
         return smart_heuristic(state,real_player), None
     
     best_value = float('-inf') if is_maximizing == True else float('inf')
     best_operator = None
     for operator, child_state in successors(state, agent_id):
+        if (time.time() - start_time) >= time_limit*0.9:
+            raise TimeoutError
         value, _ = minimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing)
         if is_maximizing:  # Maximizing player
             if value >= best_value:
@@ -110,10 +112,27 @@ def successors(state, agent_id):
     return children
 
 class AgentMinimax(Agent):
+    def __init__(self):
+      super().__init__()
+      self.last_calculated_move_value=None
+        
+
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
         start_time = time.time()
-        _, best_operator = minimax_decision(env, agent_id, depth=7, time_limit=time_limit, start_time=start_time,is_maximizing=True)
-        return best_operator if best_operator is not None else 'park'
+        self.depth=1
+        self.best_move=None
+        self.best_value=None
+        try :
+            while True :
+                best_iteration_value, best_iteration_operator = minimax_decision(env, agent_id, self.depth, time_limit, start_time, True)
+                if self.best_value is None or best_iteration_value > self.best_value:
+                    self.best_value = best_iteration_value
+                    self.best_move = best_iteration_operator
+                self.depth+=1
+        #_, best_operator = minimax_decision(env, agent_id, depth=3, time_limit=time_limit, start_time=start_time,is_maximizing=True)
+        except TimeoutError:
+            pass
+        return self.best_move if self.best_move is not None else random.choice(env.get_legal_operators(agent_id))
 
 
 class AgentAlphaBeta(Agent):
