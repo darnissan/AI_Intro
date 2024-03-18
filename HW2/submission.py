@@ -39,7 +39,7 @@ def smart_heuristic(env: WarehouseEnv, robot_id: int):
     # Weights for different components of the heuristic
     weight_distance_to_package = -1  # We want to minimize distance
     weight_distance_to_destination = -1  # Minimize distance to destination
-    weight_battery_level = 5  # Higher weight because battery is critical
+    weight_battery_level = 7  # Higher weight because battery is critical
     weight_score_difference = 10  # Prioritize maintaining/increasing score lead
     weight_packages_delivered = 15  # High priority on delivering packages
 
@@ -51,15 +51,22 @@ def smart_heuristic(env: WarehouseEnv, robot_id: int):
     else:
         distance_to_destination = 0  # No package, no distance to calculate
 
+    nearest_charging_station_distance = min([manhattan_distance(robot.position, charging_station.position)
+                                             for charging_station in env.charge_stations])
+    
+    if (robot.battery <nearest_package_distance or robot.battery < distance_to_destination ) and nearest_charging_station_distance >= robot.battery and robot.credit < other_robot.credit :
+        nearest_package_distance = 0
+        distance_to_destination = 0
+        
+
     battery_level = robot.battery
     score_difference = robot.credit - other_robot.credit
-    packages_delivered = robot.credit // 2  # Assuming each delivery scores 2 points
+
 
     heuristic_value = (weight_distance_to_package * nearest_package_distance +
                        weight_distance_to_destination * distance_to_destination +
                        weight_battery_level * battery_level +
-                       weight_score_difference * score_difference +
-                       weight_packages_delivered * packages_delivered)
+                       weight_score_difference * score_difference )
     return heuristic_value
 
 
@@ -69,7 +76,32 @@ class AgentGreedyImproved(AgentGreedy):
 
         return smart_heuristic(env, robot_id)
     
- 
+def AlphaBetaminimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizing, alpha=float('-inf'), beta=float('inf')):
+        """Perform the minimax decision making."""
+        real_player= agent_id if is_maximizing else (1-agent_id)
+        if (time.time() - start_time) >= time_limit*0.9:
+            raise TimeoutError
+        if state.done() or depth == 0 :
+            return smart_heuristic(state,real_player), None
+        best_value = float('-inf') if is_maximizing == True else float('inf')
+        best_operator = None
+        for operator, child_state in successors(state, agent_id):
+            if (time.time() - start_time) >= time_limit*0.9:
+                raise TimeoutError
+            value, _ = AlphaBetaminimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing, alpha, beta)
+            if is_maximizing:  # Maximizing player
+                if value >= best_value:
+                    best_value, best_operator = value, operator
+                alpha = max(alpha, best_value)
+                if beta <= alpha:
+                    break
+            else:  # Minimizing player
+                if value <= best_value:
+                    best_value, best_operator = value, operator
+                beta = min(beta, best_value)
+                if beta <= alpha:
+                    break
+        return best_value, best_operator
 
 
 def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizing):
@@ -94,12 +126,6 @@ def minimax_decision(state, agent_id, depth, time_limit, start_time, is_maximizi
                 best_value, best_operator = value, operator
     return best_value, best_operator
 
-def heuristic_value(state, agent_id):
-    """A simple heuristic function to evaluate the game state."""
-    # This can be replaced with a more sophisticated heuristic function
-    robot = state.get_robot(agent_id)
-    other_robot = state.get_robot(1 - agent_id)
-    return robot.credit - other_robot.credit
 
 def successors(state, agent_id):
     """Generate successors for the current state and agent."""
@@ -135,17 +161,98 @@ class AgentMinimax(Agent):
         return self.best_move if self.best_move is not None else random.choice(env.get_legal_operators(agent_id))
 
 
+
+
+
 class AgentAlphaBeta(Agent):
     # TODO: section c : 1
+    def __init__(self):
+        super().__init__()
+        self.last_calculated_move_value=None
+        
+
+
+
+
+
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
-        raise NotImplementedError()
+        start_time = time.time()
+        self.depth=1
+        self.best_move=None
+        self.best_value=None
+        try :
+            while True :
+                best_iteration_value, best_iteration_operator = AlphaBetaminimax_decision(env, agent_id, self.depth, time_limit, start_time, True, alpha=float('-inf'), beta=float('inf'))
+                if self.best_value is None or best_iteration_value > self.best_value:
+                    self.best_value = best_iteration_value
+                    self.best_move = best_iteration_operator
+                self.depth+=1
+        #_, best_operator = minimax_decision(env, agent_id, depth=3, time_limit=time_limit, start_time=start_time,is_maximizing=True)
+        except TimeoutError:
+            pass
+        return self.best_move if self.best_move is not None else random.choice(env.get_legal_operators(agent_id))
+    
+
+    
+
+
 
 
 class AgentExpectimax(Agent):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def expectimax_decision (self,state: WarehouseEnv, agent_id, depth, time_limit, start_time, is_maximizing,is_probabilistic):
+        real_player= agent_id if is_maximizing else (1-agent_id)
+        if (time.time() - start_time) >= time_limit*0.9:
+            raise TimeoutError
+        if state.done() or depth == 0 : 
+            return smart_heuristic(state,real_player), None
+        
+
+        if is_probabilistic and not is_maximizing:
+            expectimax_value = 0
+            
+            operators, _ = successors(state, agent_id)
+            total_weight = 0
+
+            # Calculate total weight
+            for operator in operators:
+                if operator == "move east" or operator == "pick_up":
+                    total_weight += 2
+                else:
+                    total_weight += 1
+
+            # Calculate probabilities
+            for operator, child_state in successors(state, agent_id):
+                if operator == 'move east' or operator == 'pick_up':
+                    weight = 2 / total_weight
+                else:
+                    weight = 1 / total_weight
+                
+                expectimax_value , _ += weight * self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing, False)  
+                return expectimax_value, None 
+            
+        
+        best_value = float('-inf') if is_maximizing == True else float('inf')
+        best_operator = None
+        for operator, child_state in successors(state, agent_id):
+            if (time.time() - start_time) >= time_limit*0.9:
+                raise TimeoutError
+            value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing,not is_maximizing)
+            if is_maximizing:  # Maximizing player
+                if value >= best_value:
+                    best_value, best_operator = value, operator
+            else:  # Minimizing player
+                if value <= best_value:
+                    best_value, best_operator = value, operator
+        return best_value, best_operator
+        
+
     # TODO: section d : 1
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
-        raise NotImplementedError()
 
+        
 
 # here you can check specific paths to get to know the environment
 class AgentHardCoded(Agent):
