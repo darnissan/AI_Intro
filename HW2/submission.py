@@ -213,11 +213,11 @@ class AgentExpectimax(Agent):
         if is_probabilistic and not is_maximizing:
             expectimax_value = 0
             
-            operators, _ = successors(state, agent_id)
+            
             total_weight = 0
 
             # Calculate total weight
-            for operator in operators:
+            for operator, child_state in successors(state, agent_id):
                 if operator == "move east" or operator == "pick_up":
                     total_weight += 2
                 else:
@@ -230,7 +230,8 @@ class AgentExpectimax(Agent):
                 else:
                     weight = 1 / total_weight
                 
-                expectimax_value , _ += weight * self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing, False)  
+                expectimax_value  +=weight*  self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, is_maximizing, False)[0] 
+                
                 return expectimax_value, None 
             
         
@@ -239,7 +240,8 @@ class AgentExpectimax(Agent):
         for operator, child_state in successors(state, agent_id):
             if (time.time() - start_time) >= time_limit*0.9:
                 raise TimeoutError
-            value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, not is_maximizing,not is_maximizing)
+            tempBool = not is_maximizing
+            value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
             if is_maximizing:  # Maximizing player
                 if value >= best_value:
                     best_value, best_operator = value, operator
@@ -251,8 +253,23 @@ class AgentExpectimax(Agent):
 
     # TODO: section d : 1
     def run_step(self, env: WarehouseEnv, agent_id, time_limit):
+        start_time = time.time()
+        self.depth=1
+        self.best_move=None
+        self.best_value=None
+        try :
+            while True :
+                best_iteration_value, best_iteration_operator = self.expectimax_decision(env, agent_id, self.depth, time_limit, start_time, True, False)
+                if self.best_value is None or best_iteration_value > self.best_value:
+                    self.best_value = best_iteration_value
+                    self.best_move = best_iteration_operator
+                self.depth+=1
+        #_, best_operator = minimax_decision(env, agent_id, depth=3, time_limit=time_limit, start_time=start_time,is_maximizing=True)
+        except TimeoutError:
+            pass
+        return self.best_move if self.best_move is not None else random.choice(env.get_legal_operators(agent_id))
+    
 
-        
 
 # here you can check specific paths to get to know the environment
 class AgentHardCoded(Agent):
