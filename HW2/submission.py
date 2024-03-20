@@ -44,7 +44,7 @@ def smart_heuristic(env: WarehouseEnv, robot_id: int):
     weight_packages_delivered = 15  # High priority on delivering packages
 
     nearest_package_distance = min([manhattan_distance(robot.position, package.position)
-                                    for package in env.packages if package.on_board], default=0)
+                                    for package in env.packages if (package.on_board and (other_robot.package is not None or manhattan_distance(other_robot.position, package.position) > 1))], default=0)
     if robot.package:
         distance_to_destination = manhattan_distance(robot.position, robot.package.destination)
         nearest_package_distance=0
