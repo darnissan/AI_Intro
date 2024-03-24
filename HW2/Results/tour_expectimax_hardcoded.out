@@ -1,0 +1,165 @@
+pygame 2.5.2 (SDL 2.28.3, Python 3.10.11)
+Hello from the pygame community. https://www.pygame.org/contribute.html
+initial board:
+[R1][P0][  ][C1][C0]
+[D1][  ][  ][  ][  ]
+[  ][P1][  ][  ][  ]
+[R0][  ][  ][  ][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(0, 3) battery: 20 credit: 0 package: [None], position:(0, 0) battery: 20 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(1, 2) destination: (0, 1), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1)]
+(1, 0) (3, 4) True
+(1, 2) (0, 1) True
+(0, 3) (3, 3) False
+(2, 3) (0, 1) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move east
+[  ][R1][  ][C1][C0]
+[D1][  ][  ][  ][  ]
+[  ][P1][  ][  ][  ]
+[  ][R0][  ][  ][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(1, 3) battery: 19 credit: 0 package: [None], position:(1, 0) battery: 19 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(1, 2) destination: (0, 1), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1)]
+(1, 0) (3, 4) True
+(1, 2) (0, 1) True
+(0, 3) (3, 3) False
+(2, 3) (0, 1) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move east
+[  ][P0][R1][C1][C0]
+[D1][  ][  ][  ][  ]
+[  ][R0][  ][  ][  ]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(1, 2) battery: 18 credit: 0 package: [None], position:(2, 0) battery: 18 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(1, 2) destination: (0, 1), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1)]
+(1, 0) (3, 4) True
+(1, 2) (0, 1) True
+(0, 3) (3, 3) False
+(2, 3) (0, 1) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move south
+[  ][P0][  ][C1][C0]
+[X0][  ][R1][  ][  ]
+[  ][R0][  ][  ][  ]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(1, 2) battery: 18 credit: 0 package: [position:(1, 2) destination: (0, 1)], position:(2, 1) battery: 17 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1)]
+(1, 0) (3, 4) True
+(0, 3) (3, 3) False
+(2, 3) (0, 1) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move north
+[  ][P0][R1][C1][C0]
+[X0][  ][  ][  ][  ]
+[R0][  ][  ][  ][  ]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(0, 2) battery: 17 credit: 0 package: [position:(1, 2) destination: (0, 1)], position:(2, 0) battery: 16 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1)]
+(1, 0) (3, 4) True
+(0, 3) (3, 3) False
+(2, 3) (0, 1) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move south
+[  ][P0][  ][C1][C0]
+[R0][  ][R1][  ][  ]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(0, 1) battery: 16 credit: 0 package: [position:(1, 2) destination: (0, 1)], position:(2, 1) battery: 15 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1)]
+(1, 0) (3, 4) True
+(0, 3) (3, 3) False
+(2, 3) (0, 1) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move east
+[  ][P0][  ][C1][C0]
+[R0][  ][  ][R1][  ]
+[  ][  ][  ][  ][  ]
+[P1][  ][  ][D1][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(0, 1) battery: 16 credit: 4 package: [None], position:(3, 1) battery: 14 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1), position:(0, 4) destination: (1, 0)]
+(1, 0) (3, 4) True
+(0, 3) (3, 3) True
+(2, 3) (0, 1) False
+(0, 4) (1, 0) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move east
+[  ][P0][  ][C1][C0]
+[  ][R0][  ][  ][R1]
+[  ][  ][  ][  ][  ]
+[P1][  ][  ][D1][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(1, 1) battery: 15 credit: 4 package: [None], position:(4, 1) battery: 13 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1), position:(0, 4) destination: (1, 0)]
+(1, 0) (3, 4) True
+(0, 3) (3, 3) True
+(2, 3) (0, 1) False
+(0, 4) (1, 0) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move south
+[  ][R0][  ][C1][C0]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][  ][R1]
+[P1][  ][  ][D1][  ]
+[  ][  ][  ][D0][  ]
+robots:  [position:(1, 0) battery: 14 credit: 4 package: [None], position:(4, 2) battery: 12 credit: 0 package: [None]]
+packages on street:  [position:(1, 0) destination: (3, 4), position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1), position:(0, 4) destination: (1, 0)]
+(1, 0) (3, 4) True
+(0, 3) (3, 3) True
+(2, 3) (0, 1) False
+(0, 4) (1, 0) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+robot 1 chose move south
+[  ][R0][  ][C1][C0]
+[  ][  ][  ][  ][  ]
+[  ][  ][  ][  ][  ]
+[P0][  ][  ][D0][R1]
+[  ][  ][  ][X0][  ]
+robots:  [position:(1, 0) battery: 14 credit: 4 package: [position:(1, 0) destination: (3, 4)], position:(4, 3) battery: 11 credit: 0 package: [None]]
+packages on street:  [position:(0, 3) destination: (3, 3), position:(2, 3) destination: (0, 1), position:(0, 4) destination: (1, 0)]
+(0, 3) (3, 3) True
+(2, 3) (0, 1) False
+(0, 4) (1, 0) False
+charge stations:  [position:(4, 0), position:(3, 0)]
+Traceback (most recent call last):
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\main.py", line 137, in <module>
+    run_agents()
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\main.py", line 112, in run_agents
+    op = agent.run_step(env, i, args.time_limit)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 262, in run_step
+    best_iteration_value, best_iteration_operator = self.expectimax_decision(env, agent_id, self.depth, time_limit, start_time, True, False)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 244, in expectimax_decision
+    value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 233, in expectimax_decision
+    expectimax_value  +=weight*  self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, is_maximizing, False)[0] 
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 244, in expectimax_decision
+    value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 244, in expectimax_decision
+    value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 233, in expectimax_decision
+    expectimax_value  +=weight*  self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, is_maximizing, False)[0] 
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 244, in expectimax_decision
+    value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 244, in expectimax_decision
+    value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 233, in expectimax_decision
+    expectimax_value  +=weight*  self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, is_maximizing, False)[0] 
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 244, in expectimax_decision
+    value, _ = self.expectimax_decision(child_state,1- agent_id, depth - 1, time_limit, start_time, tempBool,not tempBool)
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 240, in expectimax_decision
+    for operator, child_state in successors(state, agent_id):
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\submission.py", line 135, in successors
+    child = state.clone()
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\WarehouseEnv.py", line 70, in clone
+    cloned.robots = [copy(t) for t in self.robots]
+  File "C:\Users\dar18\OneDrive - Technion\Technion\Technion Courses\Semester 5\236751 - intro to AI\HW\AI_Intro\HW2\WarehouseEnv.py", line 70, in <listcomp>
+    cloned.robots = [copy(t) for t in self.robots]
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.10_3.10.3056.0_x64__qbz5n2kfra8p0\lib\copy.py", line 92, in copy
+    rv = reductor(4)
+KeyboardInterrupt
+^C
